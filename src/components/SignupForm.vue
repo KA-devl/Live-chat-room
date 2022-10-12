@@ -8,7 +8,7 @@
 </template>
 
 <script>
-import { ref } from '@vue/reactivity'
+import { ref } from 'vue'
 export default {
   setup(){
     const displayName = ref('')
@@ -19,7 +19,7 @@ export default {
       console.log(displayName.value, email.value, password.value)
     }
 
-    return {displayName, email, password}
+    return {displayName, email, password, handleSubmit}
   }
 
 }
