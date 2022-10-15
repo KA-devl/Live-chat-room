@@ -16,7 +16,7 @@
 
 import { db} from '../firebase/config'
 import { onSnapshot, collection, orderBy, query} from "firebase/firestore";
-import { computed, ref, onUpdated } from 'vue'
+import { computed, ref, onUpdated, watchEffect } from 'vue'
 import { formatDistanceToNow } from 'date-fns'
 export default {
   setup(){
@@ -32,8 +32,8 @@ export default {
     })
 
    const q = query(collection(db, 'messages'), orderBy('createdAt', 'asc'))
-   onSnapshot(q, snap=>{
-    
+   const unsub= onSnapshot(q, snap=>{
+    console.log('snapshot')
     let results =[]
      snap.docs.forEach(doc=>{
       //On ne veut pas modifier le data jusqua ce que le serveur crée le timestamp et nous le renvoi
@@ -41,6 +41,11 @@ export default {
     })
     console.log('documents: ', results)
     documents.value = results
+   })
+   
+   //When component unmount, we unsub from prev collection (To avoid extra snapshots)
+   watchEffect((onInvalidate)=>{
+    onInvalidate(()=>unsub())
    })
 
    //scroll to recent messages
