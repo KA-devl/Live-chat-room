@@ -1,8 +1,8 @@
 <template>
   <div class="chat-window">
     <div v-if="documents" class="messages">
-        <div v-for="doc in documents" :key="doc.id" class="single">
-          <span class="created-at" v-if="doc.createdAt.toDate()">{{doc.createdAt.toDate()}}</span>
+        <div v-for="doc in formattedDocuments" :key="doc.id" class="single">
+          <span class="created-at">{{doc.createdAt}} ago</span>
           <span class="name">{{doc.name}}</span>
           <span class="message">{{doc.message}}</span>
 
@@ -16,20 +16,33 @@
 
 import { db} from '../firebase/config'
 import { onSnapshot, collection, orderBy, query} from "firebase/firestore";
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { formatDistanceToNow } from 'date-fns'
 export default {
   setup(){
    const documents = ref([])
+
+    const formattedDocuments = computed(()=>{
+      if(documents.value){
+        return documents.value.map(doc => {
+          let time = formatDistanceToNow(doc.createdAt.toDate())
+          return {...doc, createdAt : time}
+        })
+      }
+    })
+
    const q = query(collection(db, 'messages'), orderBy('createdAt', 'desc'))
    onSnapshot(q, snap=>{
-    console.log('Snapshot', snap)
-    let docs = snap.docs.map(doc=>{
-      return {...doc.data(), id:doc.id}
+    
+    let results =[]
+     snap.docs.forEach(doc=>{
+      //On ne veut pas modifier le data jusqua ce que le serveur crée le timestamp et nous le renvoi
+       doc.data().createdAt && results.push({...doc.data(), id:doc.id})
     })
-    console.log('documents: ', docs)
-    documents.value = docs
+    console.log('documents: ', results)
+    documents.value = results
    })
-   return {documents}
+   return {documents, formattedDocuments}
   }
 
 }
