@@ -1,6 +1,6 @@
 <template>
   <div class="chat-window">
-    <div v-if="documents" class="messages">
+    <div v-if="documents" class="messages" ref="messages">
         <div v-for="doc in formattedDocuments" :key="doc.id" class="single">
           <span class="created-at">{{doc.createdAt}} ago</span>
           <span class="name">{{doc.name}}</span>
@@ -16,7 +16,7 @@
 
 import { db} from '../firebase/config'
 import { onSnapshot, collection, orderBy, query} from "firebase/firestore";
-import { computed, ref } from 'vue'
+import { computed, ref, onUpdated } from 'vue'
 import { formatDistanceToNow } from 'date-fns'
 export default {
   setup(){
@@ -31,7 +31,7 @@ export default {
       }
     })
 
-   const q = query(collection(db, 'messages'), orderBy('createdAt', 'desc'))
+   const q = query(collection(db, 'messages'), orderBy('createdAt', 'asc'))
    onSnapshot(q, snap=>{
     
     let results =[]
@@ -42,7 +42,14 @@ export default {
     console.log('documents: ', results)
     documents.value = results
    })
-   return {documents, formattedDocuments}
+
+   //scroll to recent messages
+   const messages = ref(null)
+   onUpdated(()=>{
+    messages.value.scrollTop= messages.value.scrollHeight
+   })
+   
+   return {documents, formattedDocuments, messages}
   }
 
 }
